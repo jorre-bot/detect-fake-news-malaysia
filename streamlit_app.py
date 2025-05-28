@@ -136,7 +136,7 @@ if not st.session_state['login_status']:
     
     with tab1:
         try:
-            name, authentication_status, username = authenticator.login(form_name="Log Masuk", location="main")
+            name, authentication_status, username = authenticator.login("Log Masuk", location="main")
             if authentication_status:
                 st.session_state['login_status'] = True
                 st.session_state['username'] = username
@@ -150,7 +150,7 @@ if not st.session_state['login_status']:
 
     with tab2:
         try:
-            if authenticator.register_user(form_name="Register user", location="main"):
+            if authenticator.register_user("Register user", location="main"):
                 st.success('User registered successfully')
                 with open('config.yaml', 'w') as file:
                     yaml.dump(config, file, default_flow_style=False)
@@ -160,7 +160,7 @@ if not st.session_state['login_status']:
 else:
     # Show logout button in sidebar
     try:
-        authenticator.logout(button_name="Logout", location="sidebar")
+        authenticator.logout("Logout", location="sidebar")
         st.sidebar.title(f'Selamat Datang, {st.session_state["username"]}!')
     except Exception as e:
         st.error(f"Logout error: {str(e)}")
