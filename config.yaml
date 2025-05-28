@@ -2,7 +2,7 @@ credentials:
   usernames: {}
 cookie:
   expiry_days: 30
-  key: some_signature_key
+  key: fake_news_detection_key_123
   name: fake_news_detection_cookie
 preauthorized:
   emails: [] 

@@ -82,11 +82,10 @@ except Exception as e:
 # Create authenticator object
 try:
     authenticator = stauth.Authenticate(
-        config['credentials'],
-        config['cookie']['name'],
-        config['cookie']['key'],
-        config['cookie']['expiry_days'],
-        config['preauthorized']
+        credentials=config['credentials'],
+        cookie_name=config['cookie']['name'],
+        key=config['cookie']['key'],
+        cookie_expiry_days=config['cookie']['expiry_days']
     )
 except Exception as e:
     st.error(f"Authentication initialization error: {str(e)}")
@@ -148,12 +147,12 @@ if not st.session_state['login_status']:
 
     with tab2:
         try:
-            if authenticator.register_user('Register user', preauthorization=False):
+            if authenticator.register_user('Register user'):
                 st.success('User registered successfully')
                 with open('config.yaml', 'w') as file:
                     yaml.dump(config, file, default_flow_style=False)
         except Exception as e:
-            st.error(e)
+            st.error(f"Registration error: {str(e)}")
 
 else:
     # Show logout button in sidebar
