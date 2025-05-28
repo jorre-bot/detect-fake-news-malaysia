@@ -135,19 +135,22 @@ if not st.session_state['login_status']:
     tab1, tab2 = st.tabs(["Log Masuk", "Daftar"])
     
     with tab1:
-        name, authentication_status, username = authenticator.login("Log Masuk", location='main')
-        if authentication_status:
-            st.session_state['login_status'] = True
-            st.session_state['username'] = username
-            st.rerun()
-        elif authentication_status == False:
-            st.error('Username/password is incorrect')
-        elif authentication_status == None:
-            st.warning('Please enter your username and password')
+        try:
+            name, authentication_status, username = authenticator.login(form_name="Log Masuk", location="main")
+            if authentication_status:
+                st.session_state['login_status'] = True
+                st.session_state['username'] = username
+                st.rerun()
+            elif authentication_status == False:
+                st.error('Username/password is incorrect')
+            elif authentication_status == None:
+                st.warning('Please enter your username and password')
+        except Exception as e:
+            st.error(f"Login error: {str(e)}")
 
     with tab2:
         try:
-            if authenticator.register_user('Register user', location='main'):
+            if authenticator.register_user(form_name="Register user", location="main"):
                 st.success('User registered successfully')
                 with open('config.yaml', 'w') as file:
                     yaml.dump(config, file, default_flow_style=False)
@@ -156,8 +159,11 @@ if not st.session_state['login_status']:
 
 else:
     # Show logout button in sidebar
-    authenticator.logout('Logout', location='sidebar')
-    st.sidebar.title(f'Selamat Datang, {st.session_state["username"]}!')
+    try:
+        authenticator.logout(button_name="Logout", location="sidebar")
+        st.sidebar.title(f'Selamat Datang, {st.session_state["username"]}!')
+    except Exception as e:
+        st.error(f"Logout error: {str(e)}")
 
     # Main app
     st.title("Pengesan Berita Palsu 🔍")
