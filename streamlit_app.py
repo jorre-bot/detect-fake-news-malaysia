@@ -150,7 +150,7 @@ if not st.session_state['login_status']:
 
     with tab2:
         try:
-            if authenticator.register_user("Register user", location="main"):
+            if authenticator.register_user("Register user", preauthorization=False, location="main"):
                 st.success('User registered successfully')
                 with open('config.yaml', 'w') as file:
                     yaml.dump(config, file, default_flow_style=False)
