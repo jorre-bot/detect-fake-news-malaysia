@@ -1,13 +1,24 @@
 import streamlit as st
-import streamlit_authenticator as stauth
-import yaml
-from yaml.loader import SafeLoader
-from predict_function import predict_news
-import pickle
-import os
-from datetime import datetime
-import pandas as pd
-import sqlite3
+try:
+    import streamlit_authenticator as stauth
+except ImportError:
+    st.error("Error: Could not import streamlit_authenticator. Please make sure it's installed correctly.")
+    st.stop()
+
+try:
+    import yaml
+    from yaml.loader import SafeLoader
+    from predict_function import predict_news
+    import pickle
+    import os
+    from datetime import datetime
+    import pandas as pd
+    import sqlite3
+    import nltk
+    nltk.download('punkt', quiet=True)
+except ImportError as e:
+    st.error(f"Error importing required packages: {str(e)}")
+    st.stop()
 
 # Initialize session state
 if 'login_status' not in st.session_state:
