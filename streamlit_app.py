@@ -201,32 +201,40 @@ else:
             if news_text.strip():
                 with st.spinner('Sedang menganalisis...'):
                     try:
+                        # Add debug information
+                        st.write("Debug Information:")
+                        st.write("Text length:", len(news_text))
+                        st.write("Sample text:", news_text[:100] + "..." if len(news_text) > 100 else news_text)
+                        
                         # Make prediction
                         result = predict_news(news_text)
                         
-                        # Save to database
-                        save_to_history(
-                            st.session_state["username"],
-                            news_text,
-                            result['prediction'],
-                            f"{result['confidence']*100:.2f}%"
-                        )
-                        
-                        # Update session state history
-                        st.session_state['history'] = load_user_history(st.session_state["username"])
-                        
-                        # Display results
-                        st.markdown("### Keputusan Analisis:")
-                        
-                        # Create result container
-                        result_class = "real" if result['prediction'] == "Real" else "fake"
-                        st.markdown(f"""
-                        <div class="prediction-text {result_class}">
-                            Ramalan: {result['prediction']}<br>
-                            Tahap Keyakinan: {result['confidence']*100:.2f}%
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
+                        if result['prediction'] != 'Error':
+                            # Save to database
+                            save_to_history(
+                                st.session_state["username"],
+                                news_text,
+                                result['prediction'],
+                                f"{result['confidence']:.2f}%"
+                            )
+                            
+                            # Update session state history
+                            st.session_state['history'] = load_user_history(st.session_state["username"])
+                            
+                            # Display results
+                            st.markdown("### Keputusan Analisis:")
+                            
+                            # Create result container
+                            result_class = "real" if result['prediction'] == "Real" else "fake"
+                            st.markdown(f"""
+                            <div class="prediction-text {result_class}">
+                                Ramalan: {result['prediction']}<br>
+                                Tahap Keyakinan: {result['confidence']:.2f}%
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.error("Maaf, terdapat masalah semasa menganalisis teks. Sila cuba lagi.")
+                            
                     except Exception as e:
                         st.error(f"Error analyzing news: {str(e)}")
             else:
