@@ -9,13 +9,18 @@ try:
     import yaml
     from yaml.loader import SafeLoader
     from predict_function import predict_news
-    import pickle
     import os
     from datetime import datetime
     import pandas as pd
     import sqlite3
     import nltk
-    nltk.download('punkt', quiet=True)
+    import joblib
+    
+    # Download required NLTK data
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', quiet=True)
 except ImportError as e:
     st.error(f"Error importing required packages: {str(e)}")
     st.stop()
@@ -30,12 +35,15 @@ if 'history' not in st.session_state:
 
 # Database initialization
 def init_db():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS user_history
-                 (username TEXT, date TEXT, text TEXT, prediction TEXT, confidence TEXT)''')
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS user_history
+                     (username TEXT, date TEXT, text TEXT, prediction TEXT, confidence TEXT)''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        st.error(f"Database initialization error: {str(e)}")
 
 def save_to_history(username, text, prediction, confidence):
     conn = sqlite3.connect('users.db')
@@ -64,17 +72,25 @@ st.set_page_config(
 )
 
 # Load configuration file
-with open('config.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
+try:
+    with open('config.yaml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+except Exception as e:
+    st.error(f"Error loading config file: {str(e)}")
+    st.stop()
 
 # Create authenticator object
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
-)
+try:
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized']
+    )
+except Exception as e:
+    st.error(f"Authentication initialization error: {str(e)}")
+    st.stop()
 
 # Debug information
 st.sidebar.write("Debug Information:")

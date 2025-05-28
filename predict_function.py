@@ -1,5 +1,7 @@
-import pickle
-import os
+import joblib
+import nltk
+from nltk.tokenize import word_tokenize
+import numpy as np
 
 def preprocess_text(text):
     import re
@@ -16,23 +18,24 @@ def preprocess_text(text):
     return text
 
 def predict_news(text):
-    # Get the directory of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(current_dir, 'best_fake_news_model.pkl')
-    
-    # Load the model
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
-    
-    # Preprocess the text
-    processed_text = preprocess_text(text)
-    
-    # Make prediction
-    prediction = model.predict([processed_text])[0]
-    probability = model.predict_proba([processed_text])[0]
-    
-    return {
-        'prediction': 'Real' if prediction == 1 else 'Fake',
-        'confidence': float(max(probability)),
-        'processed_text': processed_text
-    }
+    try:
+        # Load the model using joblib
+        model = joblib.load('best_fake_news_model.pkl')
+        
+        # Preprocess the text
+        tokens = word_tokenize(text.lower())
+        
+        # Make prediction
+        prediction = model.predict([text])
+        probabilities = model.predict_proba([text])
+        
+        # Get confidence score
+        confidence = np.max(probabilities)
+        
+        # Return result
+        return {
+            'prediction': 'Real' if prediction[0] == 1 else 'Fake',
+            'confidence': float(confidence)
+        }
+    except Exception as e:
+        raise Exception(f"Prediction error: {str(e)}")
