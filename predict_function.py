@@ -1,41 +1,57 @@
+import os
 import joblib
 import nltk
 from nltk.tokenize import word_tokenize
 import numpy as np
+import streamlit as st
+
+# Download NLTK data at startup
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
 
 def preprocess_text(text):
-    import re
-    # Convert to string
-    text = str(text)
-    # Convert to lowercase
-    text = text.lower()
-    # Remove URLs
-    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
-    # Remove numbers and special characters but keep letters and spaces
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
-    # Remove extra whitespace
-    text = ' '.join(text.split())
-    return text
+    """Simple text preprocessing"""
+    # Convert to string and lowercase
+    text = str(text).lower()
+    # Tokenize
+    tokens = word_tokenize(text)
+    # Join back to string
+    return ' '.join(tokens)
+
+@st.cache_resource
+def load_model():
+    """Load the model with caching"""
+    try:
+        model_path = os.path.join(os.path.dirname(__file__), 'best_fake_news_model.pkl')
+        return joblib.load(model_path)
+    except Exception as e:
+        raise Exception(f"Error loading model: {str(e)}")
 
 def predict_news(text):
+    """Predict if news is real or fake"""
     try:
-        # Load the model using joblib
-        model = joblib.load('best_fake_news_model.pkl')
+        # Load model (cached)
+        model = load_model()
         
-        # Preprocess the text
-        tokens = word_tokenize(text.lower())
+        # Preprocess text
+        processed_text = preprocess_text(text)
         
         # Make prediction
-        prediction = model.predict([text])
-        probabilities = model.predict_proba([text])
+        prediction = model.predict([processed_text])[0]
+        probabilities = model.predict_proba([processed_text])[0]
         
         # Get confidence score
-        confidence = np.max(probabilities)
+        confidence = float(max(probabilities))
         
-        # Return result
         return {
-            'prediction': 'Real' if prediction[0] == 1 else 'Fake',
-            'confidence': float(confidence)
+            'prediction': 'Real' if prediction == 1 else 'Fake',
+            'confidence': confidence
         }
     except Exception as e:
-        raise Exception(f"Prediction error: {str(e)}")
+        st.error(f"Prediction error: {str(e)}")
+        return {
+            'prediction': 'Error',
+            'confidence': 0.0
+        }
