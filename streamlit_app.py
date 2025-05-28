@@ -18,9 +18,23 @@ try:
     
     # Download required NLTK data
     try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt', quiet=True)
+        # Create nltk_data directory if it doesn't exist
+        nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
+        if not os.path.exists(nltk_data_dir):
+            os.makedirs(nltk_data_dir)
+        
+        # Set NLTK data path
+        nltk.data.path.append(nltk_data_dir)
+        
+        # Download required NLTK resources
+        for resource in ['punkt', 'averaged_perceptron_tagger', 'wordnet', 'stopwords']:
+            try:
+                nltk.data.find(f'tokenizers/{resource}')
+            except LookupError:
+                nltk.download(resource, download_dir=nltk_data_dir, quiet=True)
+    except Exception as e:
+        st.error(f"Error downloading NLTK data: {str(e)}")
+        st.stop()
 except ImportError as e:
     st.error(f"Error importing required packages: {str(e)}")
     st.stop()
