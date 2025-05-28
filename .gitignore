@@ -48,4 +48,8 @@ env/
 !requirements.txt
 
 # Environment variables
-.env 
+.env
+
+# Keep NLTK data
+!nltk_data/
+!nltk_data/**/* 
