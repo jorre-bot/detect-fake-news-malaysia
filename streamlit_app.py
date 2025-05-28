@@ -7,6 +7,7 @@ import pickle
 import os
 from datetime import datetime
 import pandas as pd
+import sqlite3
 
 # Initialize session state
 if 'login_status' not in st.session_state:
@@ -15,6 +16,34 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ''
 if 'history' not in st.session_state:
     st.session_state['history'] = pd.DataFrame(columns=['Date', 'Text', 'Prediction', 'Confidence'])
+
+# Database initialization
+def init_db():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS user_history
+                 (username TEXT, date TEXT, text TEXT, prediction TEXT, confidence TEXT)''')
+    conn.commit()
+    conn.close()
+
+def save_to_history(username, text, prediction, confidence):
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    c.execute("INSERT INTO user_history VALUES (?, ?, ?, ?, ?)",
+             (username, date, text, prediction, str(confidence)))
+    conn.commit()
+    conn.close()
+
+def load_user_history(username):
+    conn = sqlite3.connect('users.db')
+    df = pd.read_sql_query("SELECT date as Date, text as Text, prediction as Prediction, confidence as Confidence FROM user_history WHERE username = ? ORDER BY date DESC", 
+                          conn, params=(username,))
+    conn.close()
+    return df
+
+# Initialize database
+init_db()
 
 # Set page config
 st.set_page_config(
@@ -129,14 +158,16 @@ else:
                         # Make prediction
                         result = predict_news(news_text)
                         
-                        # Add to history
-                        new_record = pd.DataFrame({
-                            'Date': [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-                            'Text': [news_text],
-                            'Prediction': [result['prediction']],
-                            'Confidence': [f"{result['confidence']*100:.2f}%"]
-                        })
-                        st.session_state['history'] = pd.concat([new_record, st.session_state['history']]).reset_index(drop=True)
+                        # Save to database
+                        save_to_history(
+                            st.session_state["username"],
+                            news_text,
+                            result['prediction'],
+                            f"{result['confidence']*100:.2f}%"
+                        )
+                        
+                        # Update session state history
+                        st.session_state['history'] = load_user_history(st.session_state["username"])
                         
                         # Display results
                         st.markdown("### Keputusan Analisis:")
@@ -160,8 +191,10 @@ else:
             st.experimental_rerun()
 
     with tab2:
-        if not st.session_state['history'].empty:
-            st.dataframe(st.session_state['history'], use_container_width=True)
+        # Load user history from database
+        user_history = load_user_history(st.session_state["username"])
+        if not user_history.empty:
+            st.dataframe(user_history, use_container_width=True)
         else:
             st.info("Tiada sejarah analisis setakat ini.")
 
